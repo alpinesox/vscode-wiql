@@ -1,0 +1,75 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "WIQL",
+  "scopeName": "source.wiql",
+  "patterns": [
+    { "include": "#strings" },
+    { "include": "#fields" },
+    { "include": "#macros" },
+    { "include": "#keywords" },
+    { "include": "#operators" },
+    { "include": "#numbers" }
+  ],
+  "repository": {
+    "fields": {
+      "patterns": [
+        {
+          "name": "variable.other.field.wiql",
+          "match": "(?i)(?:(?:\\[(?:Source|Target)\\]|(?:Source|Target))\\s*\\.\\s*)?\\[[^\\]\\r\\n]+\\]"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.wiql",
+          "match": "(?i)\\b(?:SELECT|FROM|WHERE|ORDER|BY|GROUP|ASOF|MODE|ASC|DESC|AND|OR|NOT|IN|GROUP|UNDER|EVER|WAS|IS|EMPTY|CONTAINS|CONTAINS\\s+WORDS|NOT\\s+CONTAINS|NOT\\s+CONTAINS\\s+WORDS|IN\\s+GROUP|NOT\\s+IN\\s+GROUP|WAS\\s+EVER|IS\\s+EMPTY|IS\\s+NOT\\s+EMPTY)\\b"
+        }
+      ]
+    },
+    "macros": {
+      "patterns": [
+        {
+          "name": "constant.language.macro.wiql",
+          "match": "(?i)@[A-Za-z][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.wiql",
+          "match": "\\b\\d+(?:\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.wiql",
+          "match": "<=|>=|<>|=|<|>"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.wiql",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "name": "constant.character.escape.wiql", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.double.wiql",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.wiql", "match": "\\\\." }
+          ]
+        }
+      ]
+    }
+  }
+}

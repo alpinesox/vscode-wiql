@@ -1,0 +1,65 @@
+{
+  "name": "vscode-wiql",
+  "displayName": "WIQL",
+  "description": "Language support for Azure DevOps Work Item Query Language files.",
+  "version": "0.0.1",
+  "publisher": "alpinesox",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alpinesox/vscode-wiql.git"
+  },
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:wiql"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "wiql",
+        "aliases": [
+          "WIQL",
+          "wiql"
+        ],
+        "extensions": [
+          ".wiql"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "wiql",
+        "scopeName": "source.wiql",
+        "path": "./syntaxes/wiql.tmLanguage.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[wiql]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/vscode": "^1.92.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}
