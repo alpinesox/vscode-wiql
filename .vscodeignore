@@ -1,7 +1,13 @@
 .gitignore
+.pre-commit-config.yaml
 .github/**
 .vscode/**
+.tmp/**
+dist/**
 src/**
 test/**
 tsconfig.json
+vitest.config.ts
+package-lock.json
+*.tgz
 *.tsbuildinfo
