@@ -1,13 +1,14 @@
 repos:
-  - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.95.6
-    hooks:
-      - id: trufflehog
   - repo: local
     hooks:
-      - id: semgrep-docker
+      - id: trufflehog
+        name: TruffleHog
+        language: system
+        entry: trufflehog git file://. --since-commit HEAD --results=verified,unknown --fail --trust-local-git-config
+        pass_filenames: false
+      - id: semgrep
         name: Semgrep
-        language: docker_image
-        entry: semgrep/semgrep:1.99.0 semgrep
+        language: system
+        entry: semgrep
         pass_filenames: false
         args: ["--config", "p/ci", "--error"]

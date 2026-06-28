@@ -45,9 +45,8 @@ Install the local pre-commit hooks for TruffleHog and Semgrep scans:
 pre-commit install
 ```
 
-The Semgrep pre-commit hook runs in the `semgrep/semgrep:1.99.0` container
-because Semgrep does not support native Windows execution. Use WSL, Docker, or a
-compatible container runtime for local pre-commit scans on Windows.
+The pre-commit hooks use local `trufflehog` and `semgrep` executables. Ensure
+both commands are available on your `PATH` before running the hooks.
 
 ## Scope
 
