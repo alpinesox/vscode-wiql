@@ -1,0 +1,14 @@
+.github/
+.tmp/
+.vscode/
+dist/
+node_modules/
+src/
+test/
+.pre-commit-config.yaml
+.vscodeignore
+tsconfig.json
+vitest.config.ts
+*.tgz
+*.tsbuildinfo
+!out/**

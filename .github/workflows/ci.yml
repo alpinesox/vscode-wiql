@@ -12,13 +12,8 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: trufflesecurity/trufflehog@v3.95.6
-        with:
-          path: ./
-          extra_args: --results=verified,unknown --fail
+      - uses: actions/checkout@v5
+      - run: docker run --rm -v "${{ github.workspace }}:/repo" ghcr.io/trufflesecurity/trufflehog:3.95.6 filesystem /repo --fail --no-update --results=verified
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -28,8 +23,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

@@ -13,9 +13,36 @@ describe("WIQL language core", () => {
     );
   });
 
+  it("does not format queries with comments", () => {
+    const query = "SELECT [System.Id] FROM WorkItems -- keep this comment";
+    expect(formatWiql(query)).toBe(query);
+  });
+
+  it("does not format queries with syntax diagnostics", () => {
+    const query = "SELECT [System.Id FROM WorkItems";
+    expect(formatWiql(query)).toBe(query);
+  });
+
   it("reports unmatched parentheses", () => {
     const result = parseWiql("select [System.Id] from workitems where ([System.State] = 'Active'");
     expect(result.diagnostics.some((diagnostic) => diagnostic.message.includes("Unmatched opening parenthesis"))).toBe(true);
+  });
+
+  it("caps diagnostics", () => {
+    const result = parseWiql("(".repeat(10_000));
+    expect(result.diagnostics).toHaveLength(200);
+  });
+
+  it("returns early for oversized inputs", () => {
+    const result = parseWiql("SELECT [System.Id] FROM WorkItems\n" + " ".repeat(32_768));
+    expect(result.clauses).toEqual([]);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0].message).toBe("WIQL queries must not exceed 32K characters.");
+  });
+
+  it("reports unmatched field brackets", () => {
+    const result = parseWiql("SELECT [System.Id FROM WorkItems");
+    expect(result.diagnostics.map((diagnostic) => diagnostic.message)).toContain("Unmatched opening field bracket.");
   });
 
   it("parses Microsoft Learn flat query clauses", () => {

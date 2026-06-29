@@ -29,6 +29,7 @@ export interface WiqlDiagnostic {
 export type ClauseKind = "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "ORDER BY" | "ASOF" | "MODE";
 
 const MAX_QUERY_LENGTH = 32_768;
+const MAX_DIAGNOSTICS = 200;
 
 const KEYWORDS = new Set([
   "AND",
@@ -163,7 +164,7 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    if (["(", ")", ","].includes(c)) {
+    if (["(", ")", "[", "]", ","].includes(c)) {
       tokens.push({ kind: "symbol", value: c, start: i, end: i + 1 });
       i++;
       continue;
@@ -208,30 +209,40 @@ function readField(input: string, start: number): Token | undefined {
 }
 
 export function parseWiql(input: string): ParseResult {
-  const tokens = tokenize(input);
   const diagnostics: WiqlDiagnostic[] = [];
   const clauses: Clause[] = [];
   const bracketStack: Token[] = [];
 
   if (input.length > MAX_QUERY_LENGTH) {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "WIQL queries must not exceed 32K characters.",
       start: MAX_QUERY_LENGTH,
       end: input.length,
       severity: "error"
     });
+    return { clauses, diagnostics };
   }
+
+  const tokens = tokenize(input);
 
   for (const token of tokens) {
     if (token.value === "(" || token.value === "[") bracketStack.push(token);
+    if (token.value === "]") {
+      const open = bracketStack.pop();
+      if (!open || open.value !== "[") addDiagnostic(diagnostics, { message: "Unmatched closing field bracket.", start: token.start, end: token.end, severity: "error" });
+    }
     if (token.value === ")") {
       const open = bracketStack.pop();
-      if (!open || open.value !== "(") diagnostics.push({ message: "Unmatched closing parenthesis.", start: token.start, end: token.end, severity: "error" });
+      if (!open || open.value !== "(") addDiagnostic(diagnostics, { message: "Unmatched closing parenthesis.", start: token.start, end: token.end, severity: "error" });
     }
   }
 
   for (const open of bracketStack.filter((token) => token.value === "(")) {
-    diagnostics.push({ message: "Unmatched opening parenthesis.", start: open.start, end: open.end, severity: "error" });
+    addDiagnostic(diagnostics, { message: "Unmatched opening parenthesis.", start: open.start, end: open.end, severity: "error" });
+  }
+
+  for (const open of bracketStack.filter((token) => token.value === "[")) {
+    addDiagnostic(diagnostics, { message: "Unmatched opening field bracket.", start: open.start, end: open.end, severity: "error" });
   }
 
   let i = 0;
@@ -251,9 +262,36 @@ export function parseWiql(input: string): ParseResult {
 }
 
 export function formatWiql(input: string): string {
-  const { clauses } = parseWiql(input);
+  if (hasLineComment(input)) return input;
+  const { clauses, diagnostics } = parseWiql(input);
+  if (diagnostics.length > 0) return input;
   if (clauses.length === 0) return input.trim();
   return clauses.map(formatClause).join("\n").trimEnd() + "\n";
+}
+
+function addDiagnostic(diagnostics: WiqlDiagnostic[], diagnostic: WiqlDiagnostic): void {
+  if (diagnostics.length < MAX_DIAGNOSTICS) diagnostics.push(diagnostic);
+}
+
+function hasLineComment(input: string): boolean {
+  let quote: string | undefined;
+  for (let i = 0; i < input.length; i++) {
+    const c = input[i];
+    if (quote) {
+      if (c === "\\") {
+        i++;
+        continue;
+      }
+      if (c === quote) quote = undefined;
+      continue;
+    }
+    if (c === "'" || c === '"') {
+      quote = c;
+      continue;
+    }
+    if ((c === "-" && input[i + 1] === "-") || (c === "/" && input[i + 1] === "/")) return true;
+  }
+  return false;
 }
 
 function readClause(tokens: Token[], startIndex: number): { clause: Clause; next: number } | undefined {
@@ -296,7 +334,7 @@ function validateClauseOrder(clauses: Clause[], diagnostics: WiqlDiagnostic[]): 
   for (const clause of clauses) {
     const order = CLAUSE_ORDER.indexOf(clause.kind);
     if (order < highestSeen) {
-      diagnostics.push({
+      addDiagnostic(diagnostics, {
         message: `${clause.kind} appears out of the expected WIQL clause order.`,
         start: clause.start,
         end: clause.end,
@@ -316,7 +354,7 @@ function validateClauseSemantics(clauses: Clause[], diagnostics: WiqlDiagnostic[
   const modeValue = mode ? tokensToText(mode.tokens).replace(/[()]/g, "").trim().toLowerCase() : undefined;
 
   if (from && fromTarget !== "workitems" && fromTarget !== "workitemlinks") {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "FROM should specify WorkItems or WorkItemLinks.",
       start: from.start,
       end: from.end,
@@ -325,7 +363,7 @@ function validateClauseSemantics(clauses: Clause[], diagnostics: WiqlDiagnostic[
   }
 
   if (mode && fromTarget !== "workitemlinks") {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "MODE is only valid with FROM WorkItemLinks queries.",
       start: mode.start,
       end: mode.end,
@@ -334,7 +372,7 @@ function validateClauseSemantics(clauses: Clause[], diagnostics: WiqlDiagnostic[
   }
 
   if (mode && modeValue && !["mustcontain", "maycontain", "doesnotcontain", "recursive"].includes(modeValue)) {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "MODE should be MustContain, MayContain, DoesNotContain, or Recursive.",
       start: mode.start,
       end: mode.end,
@@ -343,7 +381,7 @@ function validateClauseSemantics(clauses: Clause[], diagnostics: WiqlDiagnostic[
   }
 
   if (modeValue === "recursive" && orderBy) {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "ORDER BY is not compatible with recursive tree queries.",
       start: orderBy.start,
       end: orderBy.end,
@@ -352,7 +390,7 @@ function validateClauseSemantics(clauses: Clause[], diagnostics: WiqlDiagnostic[
   }
 
   if (modeValue === "recursive" && asof) {
-    diagnostics.push({
+    addDiagnostic(diagnostics, {
       message: "ASOF is not compatible with recursive tree queries.",
       start: asof.start,
       end: asof.end,

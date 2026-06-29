@@ -1,4 +1,5 @@
 .gitignore
+.npmignore
 .pre-commit-config.yaml
 .github/**
 .vscode/**
