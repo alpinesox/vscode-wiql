@@ -35,8 +35,11 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider(WIQL_SELECTOR, {
       provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
-        const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
-        return [vscode.TextEdit.replace(fullRange, formatWiql(document.getText()))];
+        const original = document.getText();
+        const formatted = formatWiql(original);
+        if (formatted === original) return [];
+        const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(original.length));
+        return [vscode.TextEdit.replace(fullRange, formatted)];
       }
     }),
     vscode.languages.registerCompletionItemProvider(WIQL_SELECTOR, {

@@ -4,8 +4,7 @@ repos:
       - id: trufflehog
         name: TruffleHog
         language: system
-        entry: trufflehog git file://. --since-commit HEAD --results=verified,unknown --fail --trust-local-git-config
-        pass_filenames: false
+        entry: trufflehog filesystem --fail --no-update --results=verified,unknown
       - id: semgrep
         name: Semgrep
         language: system

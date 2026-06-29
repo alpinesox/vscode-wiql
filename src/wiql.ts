@@ -262,9 +262,10 @@ export function parseWiql(input: string): ParseResult {
 }
 
 export function formatWiql(input: string): string {
-  if (hasLineComment(input)) return input;
+  if (hasComment(input)) return input;
   const { clauses, diagnostics } = parseWiql(input);
   if (diagnostics.length > 0) return input;
+  if (!clausesCoverInput(input, clauses)) return input;
   if (clauses.length === 0) return input.trim();
   return clauses.map(formatClause).join("\n").trimEnd() + "\n";
 }
@@ -273,7 +274,7 @@ function addDiagnostic(diagnostics: WiqlDiagnostic[], diagnostic: WiqlDiagnostic
   if (diagnostics.length < MAX_DIAGNOSTICS) diagnostics.push(diagnostic);
 }
 
-function hasLineComment(input: string): boolean {
+function hasComment(input: string): boolean {
   let quote: string | undefined;
   for (let i = 0; i < input.length; i++) {
     const c = input[i];
@@ -290,8 +291,14 @@ function hasLineComment(input: string): boolean {
       continue;
     }
     if ((c === "-" && input[i + 1] === "-") || (c === "/" && input[i + 1] === "/")) return true;
+    if (c === "/" && input[i + 1] === "*") return true;
   }
   return false;
+}
+
+function clausesCoverInput(input: string, clauses: Clause[]): boolean {
+  if (clauses.length === 0) return true;
+  return input.slice(0, clauses[0].start).trim().length === 0;
 }
 
 function readClause(tokens: Token[], startIndex: number): { clause: Clause; next: number } | undefined {

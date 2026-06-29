@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: docker run --rm -v "${{ github.workspace }}:/repo" ghcr.io/trufflesecurity/trufflehog:3.95.6 filesystem /repo --fail --no-update --results=verified
+      - run: docker run --rm -v "${{ github.workspace }}:/repo" ghcr.io/trufflesecurity/trufflehog:3.95.6 filesystem /repo --fail --no-update --results=verified,unknown
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

@@ -18,6 +18,27 @@ describe("WIQL language core", () => {
     expect(formatWiql(query)).toBe(query);
   });
 
+  it("does not format queries with slash or block comments", () => {
+    const slashComment = "SELECT [System.Id] FROM WorkItems // keep this comment";
+    const blockComment = "/* keep */ SELECT [System.Id] FROM WorkItems";
+    expect(formatWiql(slashComment)).toBe(slashComment);
+    expect(formatWiql(blockComment)).toBe(blockComment);
+  });
+
+  it("formats comment-like text inside strings", () => {
+    expect(formatWiql("SELECT [System.Id] FROM WorkItems WHERE [System.Title] = 'http://example'")).toBe(
+      "SELECT [System.Id]\nFROM WorkItems\nWHERE\n    [System.Title] = 'http://example'\n"
+    );
+    expect(formatWiql("SELECT [System.Id] FROM WorkItems WHERE [System.Title] = '-- not a comment'")).toBe(
+      "SELECT [System.Id]\nFROM WorkItems\nWHERE\n    [System.Title] = '-- not a comment'\n"
+    );
+  });
+
+  it("does not format queries with unsupported leading tokens", () => {
+    const query = "garbage SELECT [System.Id] FROM WorkItems";
+    expect(formatWiql(query)).toBe(query);
+  });
+
   it("does not format queries with syntax diagnostics", () => {
     const query = "SELECT [System.Id FROM WorkItems";
     expect(formatWiql(query)).toBe(query);
