@@ -8,10 +8,12 @@ import {
   parseWiql
 } from "./wiql";
 
-const WIQL_SELECTOR: vscode.DocumentSelector = { language: "wiql", scheme: "file" };
+const WIQL_SELECTOR: vscode.DocumentSelector = { language: "wiql" };
+const DIAGNOSTIC_DELAY_MS = 150;
 
 export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection("wiql");
+  const pendingDiagnostics = new Map<string, ReturnType<typeof setTimeout>>();
   context.subscriptions.push(diagnostics);
 
   const refreshDiagnostics = (document: vscode.TextDocument) => {
@@ -19,11 +21,25 @@ export function activate(context: vscode.ExtensionContext): void {
     diagnostics.set(document.uri, toVscodeDiagnostics(document));
   };
 
+  const scheduleDiagnostics = (document: vscode.TextDocument) => {
+    if (document.languageId !== "wiql") return;
+    const key = document.uri.toString();
+    const pending = pendingDiagnostics.get(key);
+    if (pending) clearTimeout(pending);
+    pendingDiagnostics.set(key, setTimeout(() => {
+      pendingDiagnostics.delete(key);
+      refreshDiagnostics(document);
+    }, DIAGNOSTIC_DELAY_MS));
+  };
+
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider(WIQL_SELECTOR, {
       provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
-        const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
-        return [vscode.TextEdit.replace(fullRange, formatWiql(document.getText()))];
+        const original = document.getText();
+        const formatted = formatWiql(original);
+        if (formatted === original) return [];
+        const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(original.length));
+        return [vscode.TextEdit.replace(fullRange, formatted)];
       }
     }),
     vscode.languages.registerCompletionItemProvider(WIQL_SELECTOR, {
@@ -37,8 +53,18 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.workspace.onDidOpenTextDocument(refreshDiagnostics),
-    vscode.workspace.onDidChangeTextDocument((event) => refreshDiagnostics(event.document)),
-    vscode.workspace.onDidCloseTextDocument((document) => diagnostics.delete(document.uri))
+    vscode.workspace.onDidChangeTextDocument((event) => scheduleDiagnostics(event.document)),
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      const key = document.uri.toString();
+      const pending = pendingDiagnostics.get(key);
+      if (pending) clearTimeout(pending);
+      pendingDiagnostics.delete(key);
+      diagnostics.delete(document.uri);
+    }),
+    new vscode.Disposable(() => {
+      for (const pending of pendingDiagnostics.values()) clearTimeout(pending);
+      pendingDiagnostics.clear();
+    })
   );
 
   for (const document of vscode.workspace.textDocuments) refreshDiagnostics(document);

@@ -20,7 +20,7 @@
   "activationEvents": [
     "onLanguage:wiql"
   ],
-  "main": "./out/extension.js",
+  "main": "./out/src/extension.js",
   "contributes": {
     "languages": [
       {
@@ -45,13 +45,15 @@
     "configurationDefaults": {
       "[wiql]": {
         "editor.insertSpaces": true,
-        "editor.tabSize": 4,
-        "editor.formatOnSave": true
+        "editor.tabSize": 4
       }
     }
   },
   "scripts": {
+    "check:main": "node -e \"const fs=require('fs');const pkg=require('./package.json');if(!fs.existsSync(pkg.main)){throw new Error('Missing extension entry point: '+pkg.main)}\"",
     "compile": "tsc -p ./",
+    "list:vsix": "vsce ls --tree",
+    "package:vsix": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && vsce package --out dist/vscode-wiql.vsix",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "vscode:prepublish": "npm run compile"
@@ -59,6 +61,7 @@
   "devDependencies": {
     "@types/node": "^22.13.14",
     "@types/vscode": "^1.92.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^5.8.2",
     "vitest": "^3.0.8"
   }

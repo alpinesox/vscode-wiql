@@ -27,12 +27,29 @@ Run the unit tests:
 npm test
 ```
 
+Package the extension as a VSIX:
+
+```bash
+npm run package:vsix
+```
+
+Inspect the files that will be included in the VSIX:
+
+```bash
+npm run list:vsix
+```
+
+Install the local pre-commit hooks for TruffleHog and Semgrep scans:
+
+```bash
+pre-commit install
+```
+
+The pre-commit hooks use local `trufflehog` and `semgrep` executables. Ensure
+both commands are available on your `PATH` before running the hooks.
+
 ## Scope
 
 This extension currently provides offline WIQL language features. Azure DevOps
 metadata-backed completions for project-specific fields and allowed values are a
 future integration point.
-
-This artifact was produced with AI assistance and should be reviewed by a
-qualified professional before use as compliance evidence, legal submission, or
-external distribution.
