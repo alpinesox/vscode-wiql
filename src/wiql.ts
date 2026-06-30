@@ -262,6 +262,7 @@ export function parseWiql(input: string): ParseResult {
 }
 
 export function formatWiql(input: string): string {
+  if (input.length > MAX_QUERY_LENGTH) return input;
   if (hasComment(input)) return input;
   const { clauses, diagnostics } = parseWiql(input);
   if (diagnostics.length > 0) return input;

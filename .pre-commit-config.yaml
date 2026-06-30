@@ -4,7 +4,8 @@ repos:
       - id: trufflehog
         name: TruffleHog
         language: system
-        entry: trufflehog filesystem --fail --no-update --results=verified,unknown
+        entry: trufflehog filesystem . --exclude-paths .trufflehog-exclude --fail --fail-on-scan-errors --no-update --results=verified,unknown
+        pass_filenames: false
       - id: semgrep
         name: Semgrep
         language: system

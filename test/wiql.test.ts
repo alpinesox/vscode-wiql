@@ -32,6 +32,9 @@ describe("WIQL language core", () => {
     expect(formatWiql("SELECT [System.Id] FROM WorkItems WHERE [System.Title] = '-- not a comment'")).toBe(
       "SELECT [System.Id]\nFROM WorkItems\nWHERE\n    [System.Title] = '-- not a comment'\n"
     );
+    expect(formatWiql("SELECT [System.Id] FROM WorkItems WHERE [System.Title] = '/* not a comment */'")).toBe(
+      "SELECT [System.Id]\nFROM WorkItems\nWHERE\n    [System.Title] = '/* not a comment */'\n"
+    );
   });
 
   it("does not format queries with unsupported leading tokens", () => {

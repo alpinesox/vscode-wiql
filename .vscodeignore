@@ -1,6 +1,7 @@
 .gitignore
 .npmignore
 .pre-commit-config.yaml
+.trufflehog-exclude
 .github/**
 .vscode/**
 .tmp/**

@@ -6,6 +6,7 @@ node_modules/
 src/
 test/
 .pre-commit-config.yaml
+.trufflehog-exclude
 .vscodeignore
 tsconfig.json
 vitest.config.ts
